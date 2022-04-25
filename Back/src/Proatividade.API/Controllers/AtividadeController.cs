@@ -1,47 +1,73 @@
+using Microsoft.AspNetCore.Mvc;
+using Proatividade.API.Data;
+using Proatividade.API.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Back.src.Proatividade.API.Models;
-namespace Back.src.Proatividade.API.Controllers
+
+namespace Proatividade.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AtividadeController : ControllerBase
     {
+        private readonly DataContext _context;
+
+        public AtividadeController(DataContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet]
         public IEnumerable<Atividade> Get()
         {
-            return new List<Atividade>{
-                new Atividade(1)
-            };
+            return _context.Atividades;
         }
 
         [HttpGet("{id}")]
-        public string Get(int id)
+        public Atividade Get(int id)
         {
-            return $"Meu primeiro Get com parametro {id}";
+            return _context.Atividades.FirstOrDefault(x => x.Id.Equals(id));
         }
 
 
         [HttpPut("{id}")]
         public Atividade Put(int id, Atividade atividade)
         {
-            atividade.Id = id + 1;
-            return atividade;
+            if (atividade.Id != id) 
+                throw new Exception("Voce esta tentando atualizar uma atividade errada");
+
+            _context.Update(atividade);
+
+            if (_context.SaveChanges() > 0)
+                return _context.Atividades.FirstOrDefault(x => x.Id.Equals(id));
+            else
+                throw new Exception("Não foi possivel alterar a atividade");
         }
 
         [HttpPost]
-        public string Post(Atividade atividade)
+        public Atividade Post(Atividade atividade)
         {
-            return "Meu primeiro Post";
+            _context.Atividades.Add(atividade);
+
+            if (_context.SaveChanges() > 0)
+                return atividade;
+            else
+                throw new Exception("Não foi possivel adicionar o item");
         }
 
         [HttpDelete("{id}")]
-        public string Delete(int id)
+        public bool Delete(int id)
         {
-            return "Meu primeiro Delete";
+            var ativ = _context.Atividades.FirstOrDefault(x => x.Id.Equals(id));
+
+            if (ativ != null)
+            {
+                _context.Atividades.Remove(ativ);
+                return _context.SaveChanges() > 0;
+            }
+            else
+                throw new Exception("Não foi possivel excluir o itenm");
         }
     }
 }
