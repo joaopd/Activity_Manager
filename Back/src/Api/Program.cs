@@ -1,20 +1,37 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
+var builder = WebApplication.CreateBuilder(args);
 
-namespace API
+// Add services to the container.
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
+});
+builder.Services.AddCors();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+builder.Services.AddDataConfigure(builder.Configuration);
+builder.Services.AddServices();
+builder.Services.AddRepostioryConfigure();
+
+var app = builder.Build();
+
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
 }
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.UseCors(options => options.AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowAnyOrigin());
+app.MapControllers();
+
+app.Run();
